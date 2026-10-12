@@ -1,0 +1,34 @@
+[package]
+name = "lightcraft-android"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "LightCraft for Android: the desktop egui UI and engine in a NativeActivity (build with android/build-apk.sh or the Android workflow)"
+
+# Not `[lints] workspace = true`: `android_main` must be `#[unsafe(no_mangle)]` and the start-up sets
+# the process environment once (both need `unsafe`, allowed item by item below with SAFETY notes).
+[lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+too_many_arguments = "allow"
+type_complexity = "allow"
+
+[lib]
+# Android loads the app as a shared library (NativeActivity: android.app.lib_name = lightcraft_android)
+crate-type = ["cdylib", "rlib"]
+
+# Everything is Android-only: on other targets the crate is empty, so `cargo build --workspace`
+# on the desktop needs none of these.
+[target.'cfg(target_os = "android")'.dependencies]
+lightcraft-engine = { workspace = true, features = ["sam", "denoise"] }
+lightcraft-ui-egui = { workspace = true }
+# HEIC/HEIF: what most Android cameras save by default
+lightcraft-codecs = { workspace = true, features = ["heif"] }
+lightcraft-raster = { workspace = true }
+eframe = { workspace = true, features = ["default_fonts", "glow", "android-native-activity"] }
+egui = { workspace = true }
+winit = { version = "0.30", default-features = false, features = ["android-native-activity"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }

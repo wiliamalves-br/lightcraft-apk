@@ -1,0 +1,60 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Release signing: set LC_KEYSTORE (path), LC_KEYSTORE_PASSWORD, LC_KEY_ALIAS and LC_KEY_PASSWORD to sign
+// with your own key (keep the same key for every build, or Android refuses the update). Without them the
+// release APK is signed with the debug key, which installs fine but changes from machine to machine.
+def keystore = System.getenv("LC_KEYSTORE")
+
+android {
+    namespace 'ai.storyteller.lightcraft'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "ai.storyteller.lightcraft"
+        minSdk 26
+        targetSdk 35
+        versionCode((System.getenv("LC_VERSION_CODE") ?: "1") as int)
+        versionName System.getenv("LC_VERSION_NAME") ?: "0.6.0-android"
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv("LC_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("LC_KEY_ALIAS")
+                keyPassword System.getenv("LC_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig keystore ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        // "All files access" is what this app is for; don't let release lint stop the build
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    packaging {
+        jniLibs {
+            // the Rust library is ~100 MB uncompressed: keep it compressed in the APK
+            useLegacyPackaging true
+        }
+    }
+}
